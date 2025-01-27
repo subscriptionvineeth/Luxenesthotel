@@ -61,7 +61,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       email,
       password,
       options: {
-        emailRedirectTo: `${window.location.origin}/login`,
+        emailRedirectTo: process.env.NODE_ENV === 'production' 
+          ? 'https://your-deployed-url.vercel.app/login'  // Replace with your actual deployed URL
+          : 'http://localhost:3000/login',
       },
     });
     if (error) throw error;

@@ -31,7 +31,7 @@ export interface AuthContextType {
 
 export interface Booking {
   id: string;
-  user_id: string;
+  profile_id: string;
   room_id: string;
   check_in: string;
   check_out: string;

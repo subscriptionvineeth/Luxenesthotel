@@ -79,7 +79,7 @@ export default function BookingManagement() {
         .from('bookings')
         .select(`
           *,
-          users!user_id (
+          profiles!bookings_profile_id_fkey(
             email
           )
         `)

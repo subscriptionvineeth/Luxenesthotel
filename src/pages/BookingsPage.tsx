@@ -53,7 +53,7 @@ export default function MyBookingsPage() {
               capacity
             )
           `)
-          .eq('user_id', user?.id)
+          .eq('profile_id', user?.id)
           .order('created_at', { ascending: false });
 
         if (error) throw error;

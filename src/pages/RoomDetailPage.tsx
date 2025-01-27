@@ -43,7 +43,7 @@ export default function RoomDetailPage() {
       const { error } = await supabase.from('bookings').insert([
         {
           room_id: room.id,
-          user_id: user.id,
+          profile_id: user.id,
           ...bookingData,
           status: 'confirmed'
         },

@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { supabase } from '../lib/supabase';
+import { supabaseAdmin } from '../lib/supabase-admin';
 import toast from 'react-hot-toast';
 
 const SignupPage = () => {
@@ -21,7 +22,7 @@ const SignupPage = () => {
 
     try {
       setLoading(true);
-      // Sign up the user
+      // Sign up the user with regular client
       const { data: authData, error: authError } = await supabase.auth.signUp({
         email,
         password,
@@ -29,30 +30,45 @@ const SignupPage = () => {
           data: {
             full_name: name,
           },
+          emailRedirectTo: `${window.location.origin}/login`,
         },
       });
 
       if (authError) throw authError;
 
-      // Create profile entry
-      const { error: profileError } = await supabase
-        .from('profiles')
-        .insert([
-          {
-            user_id: authData.user?.id,
-            email: email,
-            full_name: name,
-            is_admin: false,
-          },
-        ]);
+      if (authData.user) {
+        // Create profile entry using admin client
+        const { error: profileError } = await supabaseAdmin
+          .from('profiles')
+          .insert([
+            {
+              id: authData.user.id,
+              email: email,
+              full_name: name,
+              is_admin: false,
+            },
+          ]);
 
-      if (profileError) throw profileError;
+        if (profileError) {
+          console.error('Profile creation error:', profileError);
+          throw profileError;
+        }
 
-      toast.success('Account created successfully! Please check your email for verification.');
+        toast.success('Account created successfully! Please check your email for verification.');
+        toast.success('Please verify your email address to complete registration', {
+          duration: 5000,
+          icon: '📧',
+        });
+      }
+      
       navigate('/login');
-    } catch (error) {
-      toast.error('Failed to create an account');
-      console.error(error);
+    } catch (error: any) {
+      if (error.message?.includes('already registered')) {
+        toast.error('This email is already registered. Please try logging in.');
+      } else {
+        console.error('Signup error:', error);
+        toast.error(error.message || 'Failed to create an account');
+      }
     } finally {
       setLoading(false);
     }
