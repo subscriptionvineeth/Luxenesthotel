@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import toast from 'react-hot-toast';
+import { supabase } from '../lib/supabase';
 
 const LoginPage = () => {
   const [email, setEmail] = useState('');
@@ -10,6 +11,26 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const { login } = useAuth();
 
+  const resendVerificationEmail = async () => {
+    try {
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/login`,
+        },
+      });
+
+      if (error) throw error;
+      toast.success('Verification email sent! Please check your inbox and spam folder.', {
+        duration: 6000,
+      });
+    } catch (error: any) {
+      console.error('Error sending verification email:', error);
+      toast.error('Failed to send verification email. Please try again.');
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
@@ -17,9 +38,33 @@ const LoginPage = () => {
       await login(email, password);
       toast.success('Logged in successfully!');
       navigate('/');
-    } catch (error) {
-      toast.error('Failed to log in');
-      console.error(error);
+    } catch (error: any) {
+      console.error('Login error:', error);
+      if (error.message?.includes('Email not confirmed')) {
+        toast.error('Please verify your email before logging in', {
+          duration: 5000,
+        });
+        
+        // Add a button to resend verification email
+        toast(
+          <div className="flex flex-col gap-2">
+            <p>Didn't receive the verification email?</p>
+            <button
+              onClick={() => resendVerificationEmail()}
+              className="bg-amber-600 text-white px-4 py-2 rounded hover:bg-amber-700"
+            >
+              Resend Verification Email
+            </button>
+          </div>,
+          {
+            duration: 10000,
+          }
+        );
+      } else if (error.message?.includes('Invalid login credentials')) {
+        toast.error('Invalid email or password');
+      } else {
+        toast.error('Failed to log in. Please try again.');
+      }
     } finally {
       setLoading(false);
     }

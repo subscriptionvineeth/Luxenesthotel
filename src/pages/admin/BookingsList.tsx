@@ -5,21 +5,23 @@ import toast from 'react-hot-toast';
 
 interface Booking {
   id: string;
-  guest_details: {
-    fullName: string;
-    email: string;
-    phoneNumber: string;
-  };
+  guest_name: string;
+  guest_email: string;
+  phone_number: string;
   check_in: string;
   check_out: string;
   guests: number;
   total_price: number;
   status: string;
   created_at: string;
-  room: {
-    name: string;
-    capacity: number;
-    price: number;
+  roomName: string;
+  roomCapacity: number;
+  roomPrice: number;
+  profile_id: string;
+  profiles?: {
+    id: string;
+    email: string;
+    full_name: string;
   };
 }
 
@@ -28,31 +30,26 @@ export default function BookingsList() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchBookings = async () => {
-      try {
-        setLoading(true);
-        const { data: bookingsData, error } = await supabase
-          .from('bookings')
-          .select(`
-            *,
-            room:rooms(name, capacity, price),
-            profiles:user_id(email)
-          `)
-          .order('created_at', { ascending: false });
-
-        if (error) throw error;
-        console.log('Fetched bookings:', bookingsData); // Debug log
-        setBookings(bookingsData || []);
-      } catch (error) {
-        console.error('Error fetching bookings:', error);
-        toast.error('Failed to load bookings');
-      } finally {
-        setLoading(false);
-      }
-    };
-
     fetchBookings();
   }, []);
+
+  const fetchBookings = async () => {
+    try {
+      setLoading(true);
+      const { data: bookingsData, error } = await supabase
+        .from('bookings')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      setBookings(bookingsData || []);
+    } catch (error) {
+      console.error('Error fetching bookings:', error);
+      toast.error('Failed to load bookings');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleCompleteBooking = async (bookingId: string) => {
     try {
@@ -127,19 +124,19 @@ export default function BookingsList() {
             <tr key={booking.id}>
               <td className="px-6 py-4 whitespace-nowrap">
                 <div className="text-sm font-medium text-gray-900">
-                  {booking.guest_details?.fullName || 'Unknown Guest'}
+                  {booking.guest_name}
                 </div>
                 <div className="text-sm text-gray-500">
-                  {booking.guest_details?.email || 'No Email'}
+                  Email: {booking.guest_email}
                 </div>
                 <div className="text-sm text-gray-500">
-                  {booking.guest_details?.phoneNumber || 'No Phone'}
+                  Phone: {booking.phone_number}
                 </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">
-                <div className="text-sm text-gray-900">{booking.room?.name}</div>
+                <div className="text-sm text-gray-900">{booking.roomName}</div>
                 <div className="text-xs text-gray-500">
-                  Capacity: {booking.room?.capacity} | Price: ₹{booking.room?.price}
+                  Capacity: {booking.roomCapacity} | Price: ₹{booking.roomPrice}
                 </div>
               </td>
               <td className="px-6 py-4 whitespace-nowrap">

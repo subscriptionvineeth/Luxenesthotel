@@ -40,16 +40,27 @@ export default function RoomDetailPage() {
         return;
       }
 
-      const { error } = await supabase.from('bookings').insert([
-        {
-          room_id: room.id,
-          profile_id: user.id,
-          ...bookingData,
-          status: 'confirmed'
-        },
-      ]);
+      const bookingPayload = {
+        room_id: room.id,
+        profile_id: user.id,
+        guest_email: user.email,
+        ...bookingData,
+        status: 'confirmed'
+      };
 
-      if (error) throw error;
+      console.log('Creating booking with payload:', bookingPayload);
+
+      const { data, error } = await supabase
+        .from('bookings')
+        .insert([bookingPayload])
+        .select();
+
+      if (error) {
+        console.error('Booking error:', error);
+        throw error;
+      }
+
+      console.log('Booking created:', data);
       toast.success('Booking confirmed successfully!');
       setShowBookingModal(false);
       navigate('/my-bookings');

@@ -4,6 +4,7 @@ import { format, addDays } from 'date-fns';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import emailjs from '@emailjs/browser';
+import { toast } from 'react-hot-toast';
 
 interface Room {
   id: string;
@@ -75,34 +76,26 @@ export default function BookingModal({ isOpen, onClose, room, onBook }: BookingM
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError(null);
-    setLoading(true);
-
     try {
-      const totalPrice = calculateTotalPrice();
-      await onBook({
-        check_in: format(formData.checkIn, 'yyyy-MM-dd'),
-        check_out: format(formData.checkOut, 'yyyy-MM-dd'),
+      if (!user) {
+        toast.error('Please log in to book a room');
+        return;
+      }
+
+      const bookingData = {
+        check_in: formData.checkIn.toISOString(),
+        check_out: formData.checkOut.toISOString(),
         guests: formData.guests,
         guest_name: formData.fullName,
+        guest_email: user.email,
         phone_number: formData.phoneNumber,
-        total_price: totalPrice,
-        room_id: room.id,
-        user_id: user?.id,
-        status: 'confirmed'
-      });
+        total_price: calculateTotalPrice(),
+      };
 
-      // Send confirmation email
-      await sendConfirmationEmail({
-        totalPrice,
-        checkIn: formData.checkIn,
-        checkOut: formData.checkOut,
-      });
-
-      setShowConfirmation(true);
-    } catch (err: any) {
-      setError(err.message || 'Failed to create booking');
-      setLoading(false);
+      await onBook(bookingData);
+    } catch (error: any) {
+      console.error('Booking submission error:', error);
+      toast.error(error.message || 'Failed to submit booking');
     }
   };
 

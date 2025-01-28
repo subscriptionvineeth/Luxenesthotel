@@ -33,6 +33,7 @@ export interface Booking {
   id: string;
   profile_id: string;
   room_id: string;
+  room?: Room;
   check_in: string;
   check_out: string;
   guests: number;

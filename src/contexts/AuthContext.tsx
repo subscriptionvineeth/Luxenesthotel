@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { supabase } from '../lib/supabase';
+import { supabaseAdmin } from '../lib/supabase-admin';
 import { User, Session } from '@supabase/supabase-js';
 
 interface AuthContextType {
@@ -44,29 +45,62 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, password: string) => {
-    const { data, error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-    
-    if (error) {
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      
+      if (error) {
+        console.error('Login error:', error);
+        throw error;
+      }
+
+      if (data.user) {
+        setUser(data.user);
+        
+        // Ensure profile exists
+        const { error: profileError } = await supabaseAdmin
+          .from('profiles')
+          .upsert({
+            id: data.user.id,
+            email: data.user.email,
+            full_name: data.user.user_metadata?.full_name || '',
+            updated_at: new Date().toISOString(),
+          }, {
+            onConflict: 'id'
+          });
+
+        if (profileError) {
+          console.error('Profile error:', profileError);
+        }
+      }
+    } catch (error: any) {
+      console.error('Login process error:', error);
       throw error;
     }
-    
-    setUser(data.user);
   };
 
   const signup = async (email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        emailRedirectTo: process.env.NODE_ENV === 'production' 
-          ? 'https://your-deployed-url.vercel.app/login'  // Replace with your actual deployed URL
-          : 'http://localhost:3000/login',
-      },
+        emailRedirectTo: `${window.location.origin}/login`,
+        data: {
+          email_confirm: true
+        }
+      }
     });
     if (error) throw error;
+
+    // Manually confirm email using admin client
+    if (data.user) {
+      await supabaseAdmin.auth.admin.updateUserById(
+        data.user.id,
+        { email_confirm: true }
+      );
+    }
   };
 
   const logout = async () => {
