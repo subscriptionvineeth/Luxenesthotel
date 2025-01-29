@@ -26,6 +26,7 @@ interface BookingFormData {
   guests: number;
   fullName: string;
   phoneNumber: string;
+  email: string;
 }
 
 export default function BookingModal({ isOpen, onClose, room, onBook }: BookingModalProps) {
@@ -40,6 +41,7 @@ export default function BookingModal({ isOpen, onClose, room, onBook }: BookingM
     guests: 1,
     fullName: '',
     phoneNumber: '',
+    email: '',
   });
 
   const calculateTotalPrice = () => {
@@ -199,6 +201,19 @@ export default function BookingModal({ isOpen, onClose, room, onBook }: BookingM
                     required
                     value={formData.phoneNumber}
                     onChange={(e) => setFormData({ ...formData, phoneNumber: e.target.value })}
+                    className="w-full p-2 border rounded focus:ring-amber-500 focus:border-amber-500"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                    Email Address
+                  </label>
+                  <input
+                    type="email"
+                    id="email"
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full p-2 border rounded focus:ring-amber-500 focus:border-amber-500"
                   />
                 </div>

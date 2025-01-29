@@ -7,46 +7,22 @@ import logo from '../assets/logo.jpg';
 
 export default function Header() {
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
-  const [isAdmin, setIsAdmin] = useState(false);
+  const { user, logout, isAdmin } = useAuth();
+  const [isAdminStatus, setIsAdminStatus] = useState(false);
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const checkAdminStatus = async () => {
-      if (!user) {
-        console.log('No user logged in');
-        setIsAdmin(false);
-        return;
-      }
-
-      try {
-        console.log('Checking admin status for user:', user.email);
-        
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('is_admin')
-          .eq('email', 'subscriptionvineeth@gmail.com') // Temporarily hardcode this email for admin access
-          .single();
-
-        console.log('Profile data:', data);
-        
-        if (error) {
-          console.error('Error fetching profile:', error);
-          setIsAdmin(false);
-          return;
-        }
-
-        // Set admin status to true if the email matches
-        setIsAdmin(user.email === 'subscriptionvineeth@gmail.com');
-      } catch (error) {
-        console.error('Error in checkAdminStatus:', error);
-        setIsAdmin(false);
+      if (user) {
+        const isAdminUser = await isAdmin(user.id);
+        setIsAdminStatus(isAdminUser);
+        console.log('Admin status for user:', user.id, 'is_admin:', isAdminUser);
       }
     };
 
     checkAdminStatus();
-  }, [user]);
+  }, [user, isAdmin]);
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -61,8 +37,8 @@ export default function Header() {
 
   const handleLogout = async () => {
     try {
-      await supabase.auth.signOut();
-      setIsAdmin(false);
+      await logout();
+      setIsAdminStatus(false);
       setIsProfileMenuOpen(false);
       navigate('/');
       toast.success('Logged out successfully');
@@ -102,7 +78,7 @@ export default function Header() {
                   My Bookings
                 </Link>
               )}
-              {isAdmin && (
+              {isAdminStatus && (
                 <Link
                   to="/admin"
                   className="text-gray-600 hover:text-amber-600 px-3 py-2 rounded-md text-sm font-medium transition-colors"
@@ -151,7 +127,7 @@ export default function Header() {
                       >
                         My Bookings
                       </Link>
-                      {isAdmin && (
+                      {isAdminStatus && (
                         <Link
                           to="/admin"
                           onClick={() => setIsProfileMenuOpen(false)}

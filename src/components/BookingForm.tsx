@@ -12,7 +12,7 @@ export default function BookingForm({ onBook, isSearch = false }: BookingFormPro
   const navigate = useNavigate();
   const { user } = useAuth();
   const [showLoginModal, setShowLoginModal] = useState(false);
-
+  
   // Set default dates
   const today = new Date();
   const tomorrow = new Date(today);

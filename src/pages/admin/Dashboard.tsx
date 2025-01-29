@@ -27,6 +27,9 @@ export default function Dashboard() {
           <h3 className="text-3xl font-bold">₹130000</h3>
         </div>
       </div>
+
+      {/* Recent Bookings Section Removed */}
+      {/* {renderRecentBookings()} */}
     </div>
   );
 } 

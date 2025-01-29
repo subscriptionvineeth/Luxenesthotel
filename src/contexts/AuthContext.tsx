@@ -7,8 +7,9 @@ interface AuthContextType {
   user: User | null;
   loading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  signup: (email: string, password: string) => Promise<void>;
+  signup: (email: string, password: string, isAdmin: boolean) => Promise<void>;
   logout: () => Promise<void>;
+  isAdmin: (userId: string) => Promise<boolean>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -81,16 +82,17 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }
   };
 
-  const signup = async (email: string, password: string) => {
+  const signup = async (email: string, password: string, isAdmin: boolean = false) => {
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
         emailRedirectTo: `${window.location.origin}/login`,
         data: {
-          email_confirm: true
-        }
-      }
+          email_confirm: true,
+          is_admin: isAdmin,
+        },
+      },
     });
     if (error) throw error;
 
@@ -108,12 +110,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     if (error) throw error;
   };
 
+  const isAdmin = async (userId: string) => {
+    console.log('Checking admin status for user:', userId);
+    const { data, error } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', userId)
+      .single();
+
+    if (error) {
+      console.error('Error fetching admin status:', error);
+      return false;
+    }
+
+    console.log('Fetched admin status for user:', userId, 'is_admin:', data?.is_admin);
+    return data?.is_admin || false;
+  };
+
   const value = {
     user,
     loading,
     login,
     signup,
     logout,
+    isAdmin,
   };
 
   return (

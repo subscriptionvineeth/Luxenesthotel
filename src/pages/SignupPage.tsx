@@ -22,61 +22,21 @@ const SignupPage = () => {
 
     try {
       setLoading(true);
-      const { data: authData, error: authError } = await supabase.auth.signUp({
+      const { error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: name,
           },
-          emailRedirectTo: `${window.location.origin}/login`,
         },
       });
 
-      if (authError) throw authError;
+      if (error) throw error;
 
-      // Check if user was created successfully
-      if (authData.user && authData.user.identities && authData.user.identities.length > 0) {
-        try {
-          // Create profile entry using admin client
-          const { error: profileError } = await supabaseAdmin
-            .from('profiles')
-            .insert([
-              {
-                id: authData.user.id,
-                email: email,
-                full_name: name,
-                is_admin: false,
-              },
-            ]);
-
-          if (profileError) throw profileError;
-
-          toast.success('Account created successfully!');
-          toast(
-            <div className="space-y-2">
-              <p>Please check your email to verify your account</p>
-              <p className="text-sm text-gray-500">
-                1. Check your inbox (and spam folder)<br/>
-                2. Click the verification link<br/>
-                3. Return here to log in
-              </p>
-            </div>,
-            { duration: 10000, icon: '📧' }
-          );
-
-          navigate('/login');
-        } catch (profileError) {
-          console.error('Profile creation error:', profileError);
-          // Clean up auth user if profile creation fails
-          await supabaseAdmin.auth.admin.deleteUser(authData.user.id);
-          throw new Error('Failed to create profile');
-        }
-      } else {
-        // User already exists
-        toast.error('This email is already registered. Please try logging in.');
-        navigate('/login');
-      }
+      // Show welcome message and redirect to home page
+      toast.success('Welcome! Your account has been created.');
+      navigate('/'); // Redirect to home page
     } catch (error: any) {
       console.error('Signup error:', error);
       toast.error(error.message || 'Failed to create an account');
